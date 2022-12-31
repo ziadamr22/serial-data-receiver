@@ -11,9 +11,9 @@ end serialReceiver;
 
 
 architecture behav of serialReceiver is
-signal temp : std_logic_vector (6 downto 0);
+signal internalregister : std_logic_vector (6 downto 0);
 begin
-process(clk,temp)
+process(clk,internalregister)
 variable parity : std_logic ;
 variable stopbit : std_logic;
 variable flag : std_logic := '0';
@@ -21,10 +21,16 @@ variable i : integer :=0;
 variable count  : integer := 0;
 begin
 if (clk'event and clk = '1') then
-	if flag = '0' and din = '1' then
-		flag := '1';
+	if flag = '0' then
+			data_valid <= '0';
+			err <= '0';
+			count := 0;
+			internalregister <= (others => '0');
+			if din = '1' then
+				flag := '1';
+			end if;
 	elsif flag = '1' and i<7 then
-		temp(i) <= din;
+		internalregister(i) <= din;
 		i := i + 1;
 			if din = '1' then
 				count := count +1;
@@ -39,11 +45,13 @@ if (clk'event and clk = '1') then
 	end if;
 end if;
 if (i = 9 ) then
+	i := 0;
+	flag := '0';
 	if (count mod 2 = 0 and (parity = '0')) or (count mod 2 = 1 and (parity = '1')) then
 				if (stopbit = '1') then
 					data_valid <= '1';
 					err <= '0';
-					dout <= temp;
+					dout <= internalregister;
 				else
 				data_valid <= '0';
 					err <= '1';
